@@ -1,0 +1,223 @@
+#Programming Assignment 3
+#Written by Tianxiao Fan
+
+#1. Plot the 30-day mortality rates for heart attach
+setwd("C:/Users/Tianx/OneDrive/Documents/R/02-R Programming/HospitalQuality")
+rawdata<-read.csv("outcome-of-care-measures.csv",colClasses = "character")
+head(rawdata)
+ncol(rawdata)
+names(rawdata)
+rawdata[,11]<-as.numeric(rawdata[,11])
+hist(rawdata[,11])
+
+#2. Finding the best hospital in a state
+best<-function(state, outcome){
+  #Read outcome data
+  setwd("C:/Users/Tianx/OneDrive/Documents/R/02-R Programming/HospitalQuality")
+  rawdata<-read.csv("outcome-of-care-measures.csv",colClasses = "character",na.strings = "Not Available")
+  data<-na.exclude(rawdata)
+  
+  #Check that state and outcome are valid
+  ##State
+  check_state<-state %in% data$State
+  if(check_state==FALSE){
+    stop("invalid state")
+  }
+  ##Outcome
+  outcomevector <- c("heart attack" , "heart failure" , "pneumonia")
+  check_outcome<-outcome %in% outcomevector
+  if(check_outcome==FALSE){
+    stop("invalid outcome")
+  }
+  
+  #Return hospital name in that state with lowest 30-day death
+  subset_state<-subset(data,data$State==state)
+  {
+    if (outcome=="heart attack"){
+      rate_min<-min(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack)
+      hospital_rowindex<-match(rate_min,subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack)
+      hospital_name<-subset_state$Hospital.Name[hospital_rowindex]
+    } else if (outcome=="heart failure"){
+      rate_min<-min(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure)
+      hospital_rowindex<-match(rate_min,subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure)
+      hospital_name<-subset_state$Hospital.Name[hospital_rowindex]
+    } else if (outcome=="pneumonia"){
+      rate_min<-min(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia)
+      hospital_rowindex<-match(rate_min,subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia)
+      hospital_name<-subset_state$Hospital.Name[hospital_rowindex]
+    } else {
+      stop("invalid outcome")
+    }
+  }
+  
+  hospital_name 
+}
+
+#3.Ranking hospitals by outcome in a state
+#Write a function called rankhospital that takes three arguments:
+#the 2-character abbreviated name of a state (state)
+#an outcome (outcome)
+#and the ranking of a hospital in that state for that outcome (num)
+
+rankhospital <- function(state, outcome, num=1){
+  #Read outcome data
+  rawdata<-read.csv("outcome-of-care-measures.csv",colClasses = "character",na.strings = "Not Available")
+  data<-na.exclude(rawdata)
+  
+  #Check that state and outcome are valid
+  ##State
+  check_state<-state %in% data$State
+  if(check_state==FALSE){
+    stop("invalid state")
+  }
+  ##Outcome
+  outcomevector <- c("heart attack" , "heart failure" , "pneumonia")
+  check_outcome<-outcome %in% outcomevector
+  if(check_outcome==FALSE){
+    stop("invalid outcome")
+  }
+  
+  #Return hospital name in that state with the given rank 
+  subset_state<-subset(data,data$State==state)
+  {
+    if (outcome=="heart attack"){
+        {if (num=="first"){
+        ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,subset_state$Hospital.Name),]
+        hospital_name<-ranked_subset_state$Hospital.Name[1]
+        } else if (num=="worst"){
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,subset_state$Hospital.Name),]
+          last<-nrow(ranked_subset_state)
+          hospital_name<-ranked_subset_state$Hospital.Name[last]
+        } else {
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,subset_state$Hospital.Name),]
+          hospital_name<-ranked_subset_state$Hospital.Name[num]}
+        }
+    } else if (outcome=="heart failure"){
+        {if (num=="first"){
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,subset_state$Hospital.Name),]
+          hospital_name<-ranked_subset_state$Hospital.Name[1]
+        } else if (num=="worst"){
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,subset_state$Hospital.Name),]
+          last<-nrow(ranked_subset_state)
+          hospital_name<-ranked_subset_state$Hospital.Name[last]
+        } else {
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,subset_state$Hospital.Name),]
+          hospital_name<-ranked_subset_state$Hospital.Name[num]}
+        }
+    } else if (outcome=="pneumonia"){
+        {if (num=="first"){
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,subset_state$Hospital.Name),]
+          hospital_name<-ranked_subset_state$Hospital.Name[1]
+        } else if (num=="worst"){
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,subset_state$Hospital.Name),]
+          last<-nrow(ranked_subset_state)
+          hospital_name<-ranked_subset_state$Hospital.Name[last]
+        } else {
+          ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,subset_state$Hospital.Name),]
+          hospital_name<-ranked_subset_state$Hospital.Name[num]}
+        }
+    } else {
+      stop("invalid outcome")
+    }
+  }
+  hospital_name 
+}
+
+#4. Ranking hospitals in all states
+
+rankall<-function(outcome, num="best"){
+  ##Read outcome data
+  rawdata<-read.csv("outcome-of-care-measures.csv",colClasses = "character",na.strings = "Not Available")
+  data<-na.exclude(rawdata)  
+  
+  ##For each state, find the hospital of the given rank
+  ##Return a data frame with the hospital names and the (abbreviated) state name
+  state_list<-unique(data$State)
+  if (outcome=="heart attack"){
+        if (num=="best"){
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,subset_state$Hospital.Name),]
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[1]
+            print(c(state,hospital_name))
+          }
+        } else if (num=="worst"){
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,subset_state$Hospital.Name),]
+            last<-nrow(ranked_subset_state)
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[last]
+            print(c(state,hospital_name))
+          }
+        } else {
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,subset_state$Hospital.Name),]
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[num]
+            print(c(state,hospital_name))
+          }
+        }
+    
+  } else if (outcome=="heart failure"){
+        if (num=="best"){
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,subset_state$Hospital.Name),]
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[1]
+            print(c(state,hospital_name))
+          }
+        } else if (num=="worst"){
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,subset_state$Hospital.Name),]
+            last<-nrow(ranked_subset_state)
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[last]
+            print(c(state,hospital_name))
+          }
+        } else {
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,subset_state$Hospital.Name),]
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[num]
+            print(c(state,hospital_name))
+          }
+    }
+  } else if (outcome=="pneumonia"){
+        if (num=="best"){
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,subset_state$Hospital.Name),]
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[1]
+            print(c(state,hospital_name))
+          }
+        } else if (num=="worst"){
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,subset_state$Hospital.Name),]
+            last<-nrow(ranked_subset_state)
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[last]
+            print(c(state,hospital_name))
+          }
+        } else {
+          for (i in 1:length(state_list)){
+            subset_state<-subset(data,data$State==state_list[i])
+            ranked_subset_state<-subset_state[order(subset_state$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,subset_state$Hospital.Name),]
+            state<-state_list[i]
+            hospital_name<-ranked_subset_state$Hospital.Name[num]
+            print(c(state,hospital_name))
+          }
+        }
+  } else {
+        stop("invalid outcome")
+  }
+  print(c(state,hospital_name))
+}
+
